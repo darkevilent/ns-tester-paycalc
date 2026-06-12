@@ -4,13 +4,13 @@ A single-file HTML pay calculator for Metro Trains Night Shift Testing staff. En
 
 ## Features
 
-- **Manual schedule entry** — click any day badge to cycle shift type, click hours to edit
+- **Manual schedule entry** — choose each day's shift type from a drop-down, click hours to edit
 - **All shift types** — Weekday NS, Sunday NS, Project EX, Overtime, PH Worked, Sick/Bonus/WLBP/PH, Non-Roster PH Leave, Annual Leave, Day Off
 - **Automatic overtime split** — Weekday and Sunday shifts over 9.5h automatically split into normal hours + overtime (200%) for any excess
 - **Pay period aware** — rates update automatically based on today's date across all periods from Jul-23 to Jan-27, including the 1% rise from Jan-26
 - **Reset button** — restore the schedule to the default template in one click
 - **Pre-tax deductions** — enter salary sacrifice, car lease, purchased leave etc. to adjust taxable income
-- **Tax estimate** — PAYG calculated using ATO 2025–26 resident individual rates (Stage 3) + 2% Medicare levy
+- **Tax estimate** — PAYG withholding calculated as fortnightly Scale 2 using ATO NAT 1004, June 2024 Schedule 1 formulas
 - **Super estimate** — 12% SG on eligible earnings (excludes Overtime and PH Worked per SGC rules; Annual Leave Loading is included)
 - **Annual estimate** — projects your fortnightly result × 26 for a yearly gross, tax, net and super figure
 - **Pays remaining** — shows pays left in the current financial year and the next pay date
@@ -88,13 +88,13 @@ All rates below use the **combined rate** (base + A078 testing allowance) unless
 
 1. Open `index.html` in any modern browser (or visit the GitHub Pages URL)
 2. Select your pay grade
-3. Click badges to set each day's shift type; click hours to adjust if needed
+3. Use the drop-downs to set each day's shift type; click hours to adjust if needed
 4. Optionally enter pre-tax deductions
 
 ## Notes
 
 - All figures are estimates only — for reference purposes, not payroll advice
-- Tax is annualised from fortnightly taxable income using ATO 2025–26 rates
+- Tax uses ATO NAT 1004, June 2024 PAYG withholding formulas for fortnightly Scale 2 payments
 - Overtime and PH Worked shifts are excluded from the super base per SGC rules
 - Annual estimate assumes 26 identical fortnights — useful as a ballpark only
 - Site Allowance and JumpUp-Infra rates are editable inline in the breakdown

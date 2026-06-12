@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NS Testing Pay Calculator v1.2</title>
+<title>NS Testing Pay Calculator v1.3</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
 
@@ -55,46 +55,40 @@ body{
 .schedule-section h2{font-size:13px;font-weight:700;color:var(--c-primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:15px}
 .weeks-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 .week-block h3{font-size:13px;font-weight:700;color:var(--c-text);margin-bottom:9px;text-transform:uppercase;letter-spacing:0.4px}
-.day-row{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--c-divider);font-size:15px}
+.day-row{display:grid;grid-template-columns:30px 46px minmax(0,1fr);align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--c-divider);font-size:15px}
 .day-row:last-child{border-bottom:none}
 .day-name{width:30px;font-weight:700;color:var(--c-text);font-size:14px}
 .day-hrs{width:36px;text-align:right;color:var(--c-muted);font-family:monospace;font-size:13px;cursor:pointer;border-radius:var(--r-sm);padding:1px 3px;transition:background var(--tr)}
 .day-hrs:hover{background:var(--c-bg)}
 .day-hrs-input{width:46px;text-align:right;font-family:monospace;font-size:13px;border:1px solid var(--c-secondary);border-radius:var(--r-sm);padding:1px 4px;color:var(--c-text);background:var(--c-card);outline:none}
-.type-badge{padding:4px 12px;border-radius:var(--r-full);font-size:12px;font-weight:600;cursor:pointer;border:none;flex-shrink:0;transition:opacity var(--tr);font-family:inherit}
-.type-badge:hover{opacity:0.75}
-.b-weekday    {background:#d3ecf4;color:#005ca6}
-.b-sunday     {background:#fef3c7;color:#7a5800}
-.b-overtime   {background:#fde8d0;color:#8a4000}
-.b-ph_worked  {background:#e2d9f3;color:#5b2c8d}
-.b-pholeave   {background:var(--c-light);color:var(--c-primary)}
-.b-dayoff     {background:var(--c-bg);color:var(--c-muted)}
-.b-ex         {background:#dce7f5;color:#224e8e}
-.b-sick       {background:#d3ecf4;color:#005ca6}
-.b-rostered_ph{background:#d3ecf4;color:#005ca6}
-.b-annual_leave{background:#fde8d0;color:#8a4000}
+.type-select{width:100%;min-width:0;min-height:31px;padding:5px 34px 5px 12px;border:1px solid transparent;border-radius:var(--r-full);font-size:12px;font-weight:700;line-height:1.25;cursor:pointer;font-family:inherit;transition:border-color var(--tr),box-shadow var(--tr),transform var(--tr);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234f5f6d' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-position:calc(100% - 13px) 50%;background-size:14px 14px;background-repeat:no-repeat}
+.type-select:hover{box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.type-select:focus{outline:2px solid rgba(0,115,207,.24);outline-offset:2px;border-color:rgba(0,115,207,.4)}
+.type-select option{background:#fff;color:var(--c-text);font-weight:600}
+.b-weekday    {background-color:#d3ecf4;color:#005ca6}
+.b-sunday     {background-color:#fef3c7;color:#7a5800}
+.b-overtime   {background-color:#fde8d0;color:#8a4000}
+.b-ph_worked  {background-color:#e2d9f3;color:#5b2c8d}
+.b-pholeave   {background-color:var(--c-light);color:var(--c-primary)}
+.b-dayoff     {background-color:var(--c-bg);color:var(--c-muted)}
+.b-ex         {background-color:#dce7f5;color:#224e8e}
+.b-sick       {background-color:#d3ecf4;color:#005ca6}
+.b-rostered_ph{background-color:#d3ecf4;color:#005ca6}
+.b-annual_leave{background-color:#fde8d0;color:#8a4000}
 .edit-hint{font-size:12px;color:var(--c-faint);margin-top:12px;text-align:right}
 .schedule-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
 .schedule-header h2{margin-bottom:0}
 .btn-reset{font-size:12px;font-family:inherit;font-weight:600;color:var(--c-muted);background:var(--c-bg);border:1px solid var(--c-border);border-radius:var(--r-sm);padding:5px 12px;cursor:pointer;transition:background var(--tr),color var(--tr)}
 .btn-reset:hover{background:var(--c-border);color:var(--c-text)}
 
-@media(max-width:600px){
-  .weeks-grid{grid-template-columns:1fr}
-  .numbers-row{grid-template-columns:1fr 1fr}
-  .annual-cols{grid-template-columns:1fr 1fr}
-  .site-header-title strong{font-size:.85rem}
-  .ded-hint{display:none}
-}
-
 /* Result */
 .result-section{display:none}
 .gross-card{background:var(--c-secondary);border-radius:var(--r-sm);padding:32px;text-align:center;margin-bottom:15px;box-shadow:var(--sh-md)}
 .gross-label{font-size:13px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px}
-.gross-value{font-size:50px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:60px}
+.gross-value{font-size:50px;font-weight:700;color:#fff;letter-spacing:0;line-height:60px}
 .gross-note{font-size:13px;color:rgba(255,255,255,0.4);margin-top:9px}
 
-.numbers-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:15px}
+.numbers-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}
 .num-card{background:var(--c-card);border-radius:var(--r-sm);padding:18px 15px;box-shadow:var(--sh-sm)}
 .num-label{font-size:12px;color:var(--c-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
 .num-value{font-size:22px;font-weight:700;color:var(--c-primary);line-height:26px}
@@ -120,14 +114,14 @@ body{
 .annual-card{background:var(--c-light);border:1px solid #c8dbec;border-radius:var(--r-sm);padding:18px 25px;margin-bottom:15px}
 .annual-label{font-size:13px;font-weight:700;color:var(--c-primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px}
 .annual-note{font-size:12px;color:var(--c-faint);text-transform:none;letter-spacing:0;font-weight:400;margin-left:6px}
-.annual-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.annual-cols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .annual-item-label{font-size:12px;color:var(--c-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px}
 .annual-item-val{font-size:20px;font-weight:700;color:var(--c-primary);font-family:'Courier New',monospace;line-height:22px}
 
 /* Pay grade */
 .grade-card{background:var(--c-card);border-radius:var(--r-sm);padding:18px 25px;margin-bottom:18px;box-shadow:var(--sh-sm);display:flex;align-items:center;gap:15px;flex-wrap:wrap}
 .grade-card label{font-size:13px;font-weight:700;color:var(--c-primary);text-transform:uppercase;letter-spacing:0.6px;white-space:nowrap}
-.grade-card select{padding:9px 12px;border:1px solid var(--c-border);border-radius:var(--r-sm);font-size:15px;color:var(--c-text);background:var(--c-card);cursor:pointer;flex:1;min-width:220px;font-family:inherit;transition:border-color var(--tr)}
+.grade-card select{padding:9px 38px 9px 12px;border:1px solid var(--c-border);border-radius:var(--r-sm);font-size:15px;color:var(--c-text);background-color:var(--c-card);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231f1f1f' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-position:calc(100% - 13px) 50%;background-size:16px 16px;background-repeat:no-repeat;appearance:none;cursor:pointer;flex:1;min-width:220px;font-family:inherit;transition:border-color var(--tr)}
 .grade-card select:focus{outline:2px solid var(--c-secondary);outline-offset:0;border-color:var(--c-secondary)}
 .grade-pill{font-size:13px;background:var(--c-light);border-radius:var(--r-full);padding:6px 15px;color:var(--c-muted);white-space:nowrap}
 .grade-pill strong{color:var(--c-primary)}
@@ -140,6 +134,44 @@ body{
 .ded-section input{width:140px;padding:9px 12px;border:1px solid var(--c-border);border-radius:var(--r-sm);font-size:16px;color:var(--c-text);font-family:inherit;transition:border-color var(--tr)}
 .ded-section input:focus{outline:2px solid var(--c-secondary);outline-offset:0;border-color:var(--c-secondary)}
 .ded-hint{font-size:13px;color:var(--c-faint)}
+
+@media(max-width:760px){
+  .wrap{padding:22px 12px}
+  .site-header-inner{padding:.7rem 1rem;gap:.85rem}
+  .site-header-logo svg{height:38px}
+  .site-header-title strong{font-size:.85rem}
+  .schedule-section,.grade-card,.ded-section,.breakdown-card{padding:18px}
+  .weeks-grid{grid-template-columns:1fr;gap:14px}
+  .schedule-header{align-items:flex-start;gap:12px}
+  .schedule-header h2{line-height:1.35}
+  .numbers-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .annual-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ded-hint{display:none}
+}
+
+@media(max-width:430px){
+  body{font-size:15px}
+  .wrap{padding:16px 10px}
+  .site-header-inner{gap:.7rem}
+  .site-header-divider{height:32px}
+  .schedule-section,.grade-card,.ded-section,.breakdown-card{padding:15px}
+  .grade-card{display:grid;grid-template-columns:1fr;gap:10px}
+  .grade-card select{min-width:0;width:100%}
+  .grade-pill{white-space:normal}
+  .day-row{grid-template-columns:30px 42px minmax(0,1fr);gap:7px}
+  .type-select{font-size:11px;padding-left:10px;padding-right:30px;background-position:calc(100% - 11px) 50%}
+  .edit-hint{text-align:left;line-height:1.45}
+  .gross-card{padding:24px 14px}
+  .gross-value{font-size:clamp(34px,11vw,44px);line-height:1.15}
+  .numbers-row,.annual-cols{gap:9px}
+  .num-card{padding:14px 10px}
+  .num-value{font-size:19px;line-height:23px;overflow-wrap:anywhere}
+  .annual-card{padding:15px}
+  .annual-note{display:block;margin-left:0;margin-top:3px}
+  .annual-item-val{font-size:18px;overflow-wrap:anywhere}
+  .bd-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
+  .bd-meta{display:block;margin-left:0;margin-top:2px}
+}
 </style>
 </head>
 <body>
@@ -160,7 +192,7 @@ body{
     <div class="site-header-divider"></div>
     <div class="site-header-title">
       <strong>Metro Trains Melbourne</strong>
-      NS Testing Pay Calculator <span style="font-size:0.75em;opacity:0.6;font-weight:400;">v1.2</span>
+      NS Testing Pay Calculator <span style="font-size:0.75em;opacity:0.6;font-weight:400;">v1.3</span>
     </div>
   </div>
 </header>
@@ -181,14 +213,14 @@ body{
   <!-- Editable schedule -->
   <div class="schedule-section" id="schedSec" style="display:none">
     <div class="schedule-header">
-      <h2>Schedule — click a badge to change type, click hours to edit</h2>
+      <h2>Schedule — choose shift type, click hours to edit</h2>
       <button class="btn-reset" onclick="initSchedule()">Reset</button>
     </div>
     <div class="weeks-grid">
       <div class="week-block"><h3 id="wk1label">Week 1</h3><div id="wk1days"></div></div>
       <div class="week-block"><h3 id="wk2label">Week 2</h3><div id="wk2days"></div></div>
     </div>
-    <div class="edit-hint">Tap a badge to cycle type → Weekday (130%) · Sunday (200%) · Project (200%) · Overtime (200%) · PH Worked (250%) · Sick/Bonus/WLBP/PH · Non-Roster PH Leave · Annual Leave · Day Off</div>
+    <div class="edit-hint">Use each drop-down to choose the shift type directly. Tap hours to edit.</div>
   </div>
 
   <!-- Pre-tax deductions -->
@@ -212,7 +244,7 @@ body{
       <div class="num-card">
         <div class="num-label">Est. Tax</div>
         <div class="num-value" id="taxVal">—</div>
-        <div class="num-note">PAYG incl. Medicare (approx.)</div>
+        <div class="num-note">ATO NAT 1004, Scale 2</div>
       </div>
       <div class="num-card">
         <div class="num-label">Est. Net</div>
@@ -244,7 +276,7 @@ body{
     <div class="breakdown-card">
       <h2>Breakdown</h2>
       <div id="bdRows"></div>
-      <p class="footnote">* Tax estimated using ATO 2025–26 resident individual rates (Stage 3) + 2% Medicare levy, annualised from taxable income. Employer PAYG withholding uses ATO Schedule 1 coefficients which may produce slightly different results (~$15–30/fortnight variance at higher incomes). All figures indicative only.</p>
+      <p class="footnote">* PAYG withholding uses ATO NAT 1004, June 2024 Schedule 1 formulas for fortnightly Scale 2 payments. All figures are indicative only.</p>
     </div>
   </div>
 
@@ -368,6 +400,17 @@ const TYPE_BG = {
   annual_leave:'b-annual_leave',
   dayoff:      'b-dayoff',
 };
+const SCALE_2_COEFFICIENTS = [
+  { limit: 361, a: 0, b: 0 },
+  { limit: 500, a: 0.1600, b: 57.8462 },
+  { limit: 625, a: 0.2600, b: 107.8462 },
+  { limit: 721, a: 0.1800, b: 57.8462 },
+  { limit: 865, a: 0.1890, b: 64.3365 },
+  { limit: 1282, a: 0.3227, b: 180.0385 },
+  { limit: 2596, a: 0.3200, b: 176.5769 },
+  { limit: 3653, a: 0.3900, b: 358.3077 },
+  { limit: Infinity, a: 0.4700, b: 650.6154 },
+];
 
 // ── State ──────────────────────────────────────────────────
 const state = { weeks: [null, null] };
@@ -409,27 +452,34 @@ function renderSchedule() {
       hrsEl.textContent = day.hours > 0 ? day.hours + 'h' : '—';
       hrsEl.addEventListener('click', () => editHours(hrsEl, wi, di));
 
-      const badge = document.createElement('button');
-      badge.className = 'type-badge ' + TYPE_BG[day.type];
-      badge.textContent = TYPE_LABEL[day.type];
-      badge.addEventListener('click', () => cycleType(wi, di));
+      const typeSelect = document.createElement('select');
+      typeSelect.className = 'type-select ' + TYPE_BG[day.type];
+      typeSelect.value = day.type;
+      typeSelect.setAttribute('aria-label', `${day.day} shift type`);
+      TYPE_ORDER.forEach(type => {
+        const opt = document.createElement('option');
+        opt.value = type;
+        opt.textContent = TYPE_LABEL[type];
+        typeSelect.appendChild(opt);
+      });
+      typeSelect.value = day.type;
+      typeSelect.addEventListener('change', e => updateDayType(wi, di, e.target.value));
 
       row.appendChild(nameEl);
       row.appendChild(hrsEl);
-      row.appendChild(badge);
+      row.appendChild(typeSelect);
       container.appendChild(row);
     });
   });
 }
 
-function cycleType(wi, di) {
+function updateDayType(wi, di, type) {
   const day = state.weeks[wi].days[di];
-  const idx = TYPE_ORDER.indexOf(day.type);
-  day.type = TYPE_ORDER[(idx + 1) % TYPE_ORDER.length];
-  // Update hours to sensible defaults
+  if (!TYPE_ORDER.includes(type)) return;
+  day.type = type;
   if (day.type === 'pholeave') day.hours = R.phHrs;
   else if (day.type === 'dayoff') day.hours = 0;
-  else day.hours = 9.5;
+  else if (day.hours === 0) day.hours = 9.5;
   renderSchedule();
   runCalc();
 }
@@ -528,7 +578,7 @@ function runCalc() {
                 eGradeAmt;
 
   const preTaxDed = parseFloat(document.getElementById('preTaxInput').value) || 0;
-  const taxable = gross - preTaxDed;
+  const taxable = Math.max(0, gross - preTaxDed);
   const tax = estimateTax(taxable);
   const net = taxable - tax;
   const superBase = gross - ot2xAmt - phWkdAmt;
@@ -604,7 +654,7 @@ function runCalc() {
   }
 
   sec('Tax (Estimate)');
-  row('PAYG incl. Medicare', 'ATO 2025–26 rates (Stage 3)', tax, true);
+  row('PAYG Withholding', 'ATO NAT 1004, Jun 2024 · Fortnightly Scale 2', tax, true);
 
   rows.push(`<div class="bd-row bd-total"><span class="bd-desc">Estimated Net Pay</span><span class="bd-val">${fmt(net)}</span></div>`);
 
@@ -626,15 +676,11 @@ function getPaysLeftInFY() {
 }
 
 function estimateTax(fortnightlyTaxable) {
-  const a = fortnightlyTaxable * 26;
-  let t = 0;
-  if      (a <= 18200)  t = 0;
-  else if (a <= 45000)  t = (a-18200)*0.19;
-  else if (a <= 135000) t = 5092  + (a-45000)*0.30;
-  else if (a <= 190000) t = 32092 + (a-135000)*0.37;
-  else                  t = 52442 + (a-190000)*0.45;
-  t += a * 0.02; // Medicare
-  return t / 26;
+  const weeklyEquivalent = Math.floor(Math.max(0, fortnightlyTaxable) / 2) + 0.99;
+  const row = SCALE_2_COEFFICIENTS.find(c => weeklyEquivalent < c.limit) || SCALE_2_COEFFICIENTS[SCALE_2_COEFFICIENTS.length - 1];
+  if (row.a === 0) return 0;
+  const weeklyWithholding = Math.max(0, Math.floor((row.a * weeklyEquivalent) - row.b + 0.5 + Number.EPSILON));
+  return weeklyWithholding * 2;
 }
 
 // ── Formatters ─────────────────────────────────────────────
