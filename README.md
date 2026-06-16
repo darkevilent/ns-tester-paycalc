@@ -12,7 +12,7 @@ A single-file HTML pay calculator for Metro Trains Night Shift Testing staff. En
 - **Pre-tax deductions** — enter salary sacrifice, car lease, purchased leave etc. to adjust taxable income
 - **Tax estimate** — PAYG withholding calculated as fortnightly Scale 2 using ATO NAT 1004, June 2024 Schedule 1 formulas
 - **Super estimate** — 12% SG on eligible earnings (excludes Overtime and PH Worked per SGC rules; Annual Leave Loading is included)
-- **Annual estimate** — projects your fortnightly result × 26 for a yearly gross, tax, net and super figure
+- **Annual estimate** — projects your fortnightly result × 26 for yearly gross, tax and net; super is capped at the current concessional contributions cap ($30,000 until 30 Jun 2026, then $32,500 from 1 Jul 2026)
 - **Pays remaining** — shows pays left in the current financial year and the next pay date
 
 ## Pay Grades
@@ -96,5 +96,5 @@ All rates below use the **combined rate** (base + A078 testing allowance) unless
 - All figures are estimates only — for reference purposes, not payroll advice
 - Tax uses ATO NAT 1004, June 2024 PAYG withholding formulas for fortnightly Scale 2 payments
 - Overtime and PH Worked shifts are excluded from the super base per SGC rules
-- Annual estimate assumes 26 identical fortnights — useful as a ballpark only
+- Annual estimate assumes 26 identical fortnights for gross, tax and net; super is capped at the current concessional contributions cap ($30,000 until 30 Jun 2026, then $32,500 from 1 Jul 2026)
 - Site Allowance and JumpUp-Infra rates are editable inline in the breakdown

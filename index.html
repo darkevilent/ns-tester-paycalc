@@ -263,7 +263,7 @@ body{
       </div>
     </div>
     <div class="annual-card">
-      <div class="annual-label">Annual Estimate <span class="annual-note">if every fortnight matched this one (× 26)</span></div>
+      <div class="annual-label">Annual Estimate <span class="annual-note">gross, tax &amp; net x 26; super capped at <span id="annSuperCapNote">$30,000</span></span></div>
       <div class="annual-cols">
         <div><div class="annual-item-label">Gross</div><div class="annual-item-val" id="annGross">—</div></div>
         <div><div class="annual-item-label">Tax</div><div class="annual-item-val" id="annTax">—</div></div>
@@ -374,6 +374,15 @@ const R = {
   exFloor:          0,
   phHrs:            7.6,  // fixed — not grade-dependent
 };
+const SUPER_GUARANTEE_RATE = 0.12;
+const SUPER_CONCESSIONAL_CAPS = [
+  { start: new Date(2026, 6, 1), amount: 32500 },
+  { start: new Date(2024, 6, 1), amount: 30000 },
+];
+
+function getSuperConcessionalCap(date = new Date()) {
+  return (SUPER_CONCESSIONAL_CAPS.find(cap => date >= cap.start) || SUPER_CONCESSIONAL_CAPS[SUPER_CONCESSIONAL_CAPS.length - 1]).amount;
+}
 
 const TYPE_ORDER = ['weekday','sunday','ex_project','overtime','annual_leave','dayoff','sick','pholeave','ph_worked'];
 const TYPE_LABEL = {
@@ -582,7 +591,9 @@ function runCalc() {
   const tax = estimateTax(taxable);
   const net = taxable - tax;
   const superBase = gross - ot2xAmt - phWkdAmt;
-  const superAmt  = superBase * 0.12;
+  const superAmt  = superBase * SUPER_GUARANTEE_RATE;
+  const superConcessionalCap = getSuperConcessionalCap();
+  const annualSuper = Math.min(superAmt * 26, superConcessionalCap);
 
   document.getElementById('resultSec').style.display = 'block';
   document.getElementById('grossVal').textContent = fmt(gross);
@@ -594,7 +605,8 @@ function runCalc() {
   document.getElementById('annGross').textContent = fmt(gross * 26);
   document.getElementById('annTax').textContent   = fmt(tax   * 26);
   document.getElementById('annNet').textContent   = fmt(net   * 26);
-  document.getElementById('annSuper').textContent = fmt(superAmt * 26);
+  document.getElementById('annSuper').textContent = fmt(annualSuper);
+  document.getElementById('annSuperCapNote').textContent = fmtWhole(superConcessionalCap);
 
   const { count: paysLeft, next: nextPay, fyStartYear } = getPaysLeftInFY();
   const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -685,6 +697,7 @@ function estimateTax(fortnightlyTaxable) {
 
 // ── Formatters ─────────────────────────────────────────────
 const fmt = n => '$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+const fmtWhole = n => '$' + Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
 const cur = n => '$' + n.toFixed(2);
 const h   = n => n % 1 === 0 ? n+'h' : n.toFixed(1)+'h';
 
