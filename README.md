@@ -5,7 +5,7 @@ A single-file HTML pay calculator for Metro Trains Night Shift Testing staff. En
 ## Features
 
 - **Manual schedule entry** — choose each day's shift type from a drop-down, click hours to edit
-- **All shift types** — Weekday NS, Sunday NS, Project EX, Overtime, PH Worked, Sick/Bonus/WLBP/PH, Non-Roster PH Leave, Annual Leave, Day Off
+- **All shift types** — Weekday NS, Sunday NS, Project EX, Overtime, PH Worked, Rostered PH, Non-Roster PH Leave, Sick / Bonus / WLBP, Annual Leave, Day Off
 - **Automatic overtime split** — Weekday and Sunday shifts over 9.5h automatically split into normal hours + overtime (200%) for any excess
 - **Pay period aware** — rates update automatically based on today's date across all periods from Jul-23 to Jan-27, including the 1% rise from Jan-26
 - **Reset button** — restore the schedule to the default template in one click
@@ -40,9 +40,9 @@ All rates below use the **combined rate** (base + A078 testing allowance) unless
 ### Project EX
 - Normal pay: hours × project rate (combined rate, floored at VZI OT rate)
 - Penalty pay: hours × project rate again (effectively 200% total)
-- Site Allowance: hours × $10.50/hr (editable in the breakdown)
-- JumpUp-Infra: hours × $5.10/hr (editable in the breakdown)
-- E Grade (A440) does **not** apply to project shifts
+- Site Allowance: hours × $10.75/hr (editable in the breakdown)
+- JumpUp-Infra: hours × $5.0955/hr (editable in the breakdown)
+- E Grade (A440) applies
 
 ### Overtime (dedicated shift)
 - Pay: hours × combined rate × 200%
@@ -54,9 +54,13 @@ All rates below use the **combined rate** (base + A078 testing allowance) unless
 - E Grade (A440) applies
 - Excluded from super base
 
-### Sick / Bonus / WLBP / PH
+### Sick / Bonus / WLBP
 - Pay: hours × combined rate (100%)
 - E Grade (A440) does not apply
+
+### Rostered PH
+- Pay: rostered hours × combined rate (100%)
+- E Grade (A440) applies
 
 ### Non-Roster PH Leave
 - Pay: hours × combined rate (100%), defaulting to 7.6h
@@ -79,7 +83,7 @@ All rates below use the **combined rate** (base + A078 testing allowance) unless
 | Allowance | Code | Applies to |
 |---|---|---|
 | Testing Allowance | A078 | All shift types (built into combined rate) |
-| E Grade Electrical — Infra | A440 | Weekday, Sunday, Overtime, PH Worked |
+| E Grade Electrical — Infra | A440 | Weekday, Sunday, Project EX, Overtime, PH Worked, Rostered PH |
 | Annual Leave Loading | — | All Annual Leave hours |
 | Site Allowance | — | Project EX shifts only |
 | JumpUp-Infra | — | Project EX shifts only |

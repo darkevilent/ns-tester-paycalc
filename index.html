@@ -73,7 +73,7 @@ body{
 .b-dayoff     {background-color:var(--c-bg);color:var(--c-muted)}
 .b-ex         {background-color:#dce7f5;color:#224e8e}
 .b-sick       {background-color:#d3ecf4;color:#005ca6}
-.b-rostered_ph{background-color:#d3ecf4;color:#005ca6}
+.b-rostered_ph{background-color:#e7f4dc;color:#306b0d}
 .b-annual_leave{background-color:#fde8d0;color:#8a4000}
 .edit-hint{font-size:12px;color:var(--c-faint);margin-top:12px;text-align:right}
 .schedule-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
@@ -259,7 +259,7 @@ body{
       <div class="num-card">
         <div class="num-label">Hours Worked</div>
         <div class="num-value" id="hoursVal">—</div>
-        <div class="num-note">Weekday, Sun, EX, OT, PH worked</div>
+        <div class="num-note">Weekday, Sun, EX, OT, PH, Rostered PH</div>
       </div>
     </div>
     <div class="annual-card">
@@ -299,16 +299,15 @@ const PAY_GRADES = [
   { code:'VZK', desc:'Technical Officer Level 1',rates:[89.0400,91.2660,93.0913,94.9531,96.6148,99.2887,101.0262,102.7942] },
   { code:'VZL', desc:'Technical Officer Level 2',rates:[94.6056,96.9707,98.9101,100.8883,102.6538,105.4947,107.3409,109.2194] },
 ];
-// E Grade Electrical — Infra (A440), same period columns (1% raise applied from Jan-26)
+// E Grade Electrical — Infra (A440), with 1% Metro Tunnel uplift from Jan-26.
 const EGRADE_RATES        = [1.7695,1.8137,1.8500,1.8870,1.9200,1.9731,2.0077,2.0429];
 // Testing Allowance (A078) — applies to every worked hour (1% raise from Jan-26)
 const TESTING_ALLOW_RATES = [5.9297,6.0779,6.1995,6.3235,6.4342,6.6123,6.7280,6.8458];
 // OT Penalty is proportional to base (ratio derived from payslip)
 const OT_PEN_MULT = 86.6822 / 77.9758;   // ≈ 1.1117
-// Site & JumpUp Allowance rate — editable in the breakdown
-let siteJumpRate = 10.50;
-// JumpUp-Infra for project shifts (no E Grade on project shifts)
-let jumpUpRate = 5.10;
+// Project allowance defaults; both remain editable in the breakdown.
+let siteJumpRate = 10.75;
+let jumpUpRate = 5.0955;
 
 function currentPeriodIdx() {
   const now = new Date();
@@ -375,15 +374,15 @@ const R = {
   phHrs:            7.6,  // fixed — not grade-dependent
 };
 
-const TYPE_ORDER = ['weekday','sunday','ex_project','overtime','annual_leave','dayoff','sick','pholeave','ph_worked'];
+const TYPE_ORDER = ['weekday','sunday','ex_project','overtime','ph_worked','rostered_ph','pholeave','sick','annual_leave','dayoff'];
 const TYPE_LABEL = {
   weekday:     'Weekday (130%)',
   sunday:      'Sunday (200%)',
   ex_project:  'Project (200%)',
   overtime:    'Overtime (200%)',
   ph_worked:   'PH Worked (250%)',
-  sick:        'Sick/Bonus/WLBP/PH',
-  rostered_ph: 'Sick/Bonus/WLBP/PH',
+  sick:        'Sick / Bonus / WLBP',
+  rostered_ph: 'Rostered PH',
   pholeave:    'Non-Roster PH Leave',
   annual_leave:'Annual Leave',
   dayoff:      'Day Off',
@@ -395,7 +394,7 @@ const TYPE_BG = {
   overtime:    'b-overtime',
   ph_worked:   'b-ph_worked',
   sick:        'b-sick',
-  rostered_ph: 'b-sick',
+  rostered_ph: 'b-rostered_ph',
   pholeave:    'b-pholeave',
   annual_leave:'b-annual_leave',
   dayoff:      'b-dayoff',
@@ -514,32 +513,33 @@ function runCalc() {
   if (R.base === 0) { document.getElementById('resultSec').style.display = 'none'; return; }
   const allDays = [...state.weeks[0].days, ...state.weeks[1].days];
 
-  let wdHrs=0, sunHrs=0, exHrs=0, exShifts=0;
+  let wdHrs=0, sunHrs=0, exHrs=0;
   let otHrs=0, phWkdHrs=0;
-  let sickHrs=0, phLeaveHrs=0;
+  let sickHrs=0, rosteredPhHrs=0, phLeaveHrs=0;
   let alWdHrs=0, alSunHrs=0;
-  let nightHrs=0, eGradeHrs=0;
+  let nightHrs=0, workedHrs=0, eGradeHrs=0;
 
   allDays.forEach(d => {
     const h = d.hours;
     switch (d.type) {
       case 'weekday': {
         const reg = Math.min(h, 9.5), ot = Math.max(0, h - 9.5);
-        wdHrs += reg; nightHrs += reg; eGradeHrs += h; otHrs += ot; break;
+        wdHrs += reg; nightHrs += reg; workedHrs += h; eGradeHrs += h; otHrs += ot; break;
       }
       case 'sunday': {
         const reg = Math.min(h, 9.5), ot = Math.max(0, h - 9.5);
-        sunHrs += reg; eGradeHrs += h; otHrs += ot; break;
+        sunHrs += reg; workedHrs += h; eGradeHrs += h; otHrs += ot; break;
       }
       case 'ex_project':
-        exHrs     += h; exShifts++;    break;
+        exHrs     += h; workedHrs += h; eGradeHrs += h; break;
       case 'overtime':
-        otHrs     += h; eGradeHrs += h; break;
+        otHrs     += h; workedHrs += h; eGradeHrs += h; break;
       case 'ph_worked':
-        phWkdHrs  += h; eGradeHrs += h; break;
+        phWkdHrs  += h; workedHrs += h; eGradeHrs += h; break;
       case 'sick':
-      case 'rostered_ph':
         sickHrs   += h; break;
+      case 'rostered_ph':
+        rosteredPhHrs += h; workedHrs += h; eGradeHrs += h; break;
       case 'pholeave':
         phLeaveHrs  += h; break;
       case 'annual_leave':
@@ -561,6 +561,7 @@ function runCalc() {
   const ot2xAmt        = otHrs        * R.ot2x;
   const phWkdAmt       = phWkdHrs     * R.ot25x;
   const sickAmt        = sickHrs      * combined;
+  const rosteredPhAmt  = rosteredPhHrs * combined;
   const phLeaveAmt     = phLeaveHrs   * combined;
   const alWdNormalAmt   = alWdHrs      * combined;
   const alWdExcessAmt   = alWdHrs      * combined * 0.10;
@@ -573,7 +574,7 @@ function runCalc() {
                 sunNormalAmt + sunWePenAmt +
                 exNormalAmt + exPenAmt + exAllow + jumpUpAmt +
                 ot2xAmt +
-                phWkdAmt + sickAmt + phLeaveAmt +
+                phWkdAmt + sickAmt + rosteredPhAmt + phLeaveAmt +
                 alWdNormalAmt + alWdExcessAmt + alSunNormalAmt + alSunExcessAmt + alLoadingAmt +
                 eGradeAmt;
 
@@ -589,7 +590,7 @@ function runCalc() {
   document.getElementById('taxVal').textContent = fmt(tax);
   document.getElementById('netVal').textContent = fmt(net);
   document.getElementById('superVal').textContent = fmt(superAmt);
-  document.getElementById('hoursVal').textContent = eGradeHrs % 1 === 0 ? eGradeHrs : eGradeHrs.toFixed(2);
+  document.getElementById('hoursVal').textContent = workedHrs % 1 === 0 ? workedHrs : workedHrs.toFixed(2);
 
   document.getElementById('annGross').textContent = fmt(gross * 26);
   document.getElementById('annTax').textContent   = fmt(tax   * 26);
@@ -625,7 +626,8 @@ function runCalc() {
   if (exHrs > 0)        row('Project — Penalty',               `${h(exHrs)} × ${cur(exRate)}/hr`, exPenAmt);
   if (otHrs > 0)        row('Overtime Shift (200%)',             `${h(otHrs)} × ${cur(R.ot2x)}/hr`,               ot2xAmt);
   if (phWkdHrs > 0)     row('PH Overtime Shift (250%)',         `${h(phWkdHrs)} × ${cur(R.ot25x)}/hr`,           phWkdAmt);
-  if (sickHrs > 0)      row('Sick/Bonus/WLBP/PH (100%)',         `${h(sickHrs)} × ${cur(combined)}/hr`,            sickAmt);
+  if (sickHrs > 0)      row('Sick / Bonus / WLBP (100%)',        `${h(sickHrs)} × ${cur(combined)}/hr`,            sickAmt);
+  if (rosteredPhHrs > 0) row('Rostered PH (100%)',               `${h(rosteredPhHrs)} × ${cur(combined)}/hr`,      rosteredPhAmt);
   if (phLeaveHrs > 0)   row('Non-Roster PH Leave',              `${h(phLeaveHrs)} × ${cur(combined)}/hr`,         phLeaveAmt);
   if (alWdHrs + alSunHrs > 0) row('Annual Leave',                    `${h(alWdHrs + alSunHrs)} × ${cur(combined)}/hr`,                      alWdNormalAmt + alSunNormalAmt);
   if (alWdHrs > 0)            row('Annual Leave NS Excess (10%)',     `${h(alWdHrs)} × ${cur(combined * 0.10)}/hr`,                          alWdExcessAmt);
@@ -633,7 +635,7 @@ function runCalc() {
 
   sec('Allowances');
   if (alLoadingAmt > 0)   row('Annual Leave Loading (20%)',          `${h(alWdHrs + alSunHrs)} × ${cur(combined * 0.20)}/hr`, alLoadingAmt);
-  if (eGradeHrs > 0)      row('E Grade Electrical — Infra (A440)',  `${h(eGradeHrs)} × ${cur(R.eGrade)}/hr`,           eGradeAmt);
+  if (eGradeHrs > 0)      row('E Grade Electrical — Infra (A440)',  `${h(eGradeHrs)} × ${curPrecise(R.eGrade)}/hr`,    eGradeAmt);
   if (exHrs > 0)      rows.push(`
     <div class="bd-row">
       <span class="bd-desc">Site Allowance<span class="bd-meta">${h(exHrs)} × $<input class="rate-inline" type="number" value="${siteJumpRate.toFixed(2)}" min="0" step="0.01" title="Click to edit rate" onchange="siteJumpRate=parseFloat(this.value)||0;runCalc()">/hr</span></span>
@@ -641,7 +643,7 @@ function runCalc() {
     </div>`);
   if (exHrs > 0)      rows.push(`
     <div class="bd-row">
-      <span class="bd-desc">JumpUp-Infra<span class="bd-meta">${h(exHrs)} × $<input class="rate-inline" type="number" value="${jumpUpRate.toFixed(2)}" min="0" step="0.01" title="Click to edit rate" onchange="jumpUpRate=parseFloat(this.value)||0;runCalc()">/hr</span></span>
+      <span class="bd-desc">JumpUp-Infra<span class="bd-meta">${h(exHrs)} × $<input class="rate-inline" type="number" value="${jumpUpRate.toFixed(4)}" min="0" step="0.0001" title="Click to edit rate" onchange="jumpUpRate=parseFloat(this.value)||0;runCalc()">/hr</span></span>
       <span class="bd-val">${fmt(jumpUpAmt)}</span>
     </div>`);
 
@@ -686,6 +688,7 @@ function estimateTax(fortnightlyTaxable) {
 // ── Formatters ─────────────────────────────────────────────
 const fmt = n => '$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 const cur = n => '$' + n.toFixed(2);
+const curPrecise = n => '$' + n.toFixed(4);
 const h   = n => n % 1 === 0 ? n+'h' : n.toFixed(1)+'h';
 
 // ── Init ───────────────────────────────────────────────────
