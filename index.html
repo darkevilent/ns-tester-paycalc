@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NS Testing Pay Calculator v1.3</title>
+<title>NS Testing Pay Calculator v1.4</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
 
@@ -192,7 +192,7 @@ body{
     <div class="site-header-divider"></div>
     <div class="site-header-title">
       <strong>Metro Trains Melbourne</strong>
-      NS Testing Pay Calculator <span style="font-size:0.75em;opacity:0.6;font-weight:400;">v1.3</span>
+      NS Testing Pay Calculator <span style="font-size:0.75em;opacity:0.6;font-weight:400;">v1.4</span>
     </div>
   </div>
 </header>
@@ -276,7 +276,7 @@ body{
     <div class="breakdown-card">
       <h2>Breakdown</h2>
       <div id="bdRows"></div>
-      <p class="footnote">* PAYG withholding uses ATO NAT 1004, June 2024 Schedule 1 formulas for fortnightly Scale 2 payments. All figures are indicative only.</p>
+      <p class="footnote">* PAYG withholding uses the ATO NAT 1004 Schedule 1 formula in effect on the current date for fortnightly Scale 2 payments. All figures are indicative only.</p>
     </div>
   </div>
 
@@ -408,17 +408,49 @@ const TYPE_BG = {
   annual_leave:'b-annual_leave',
   dayoff:      'b-dayoff',
 };
-const SCALE_2_COEFFICIENTS = [
-  { limit: 361, a: 0, b: 0 },
-  { limit: 500, a: 0.1600, b: 57.8462 },
-  { limit: 625, a: 0.2600, b: 107.8462 },
-  { limit: 721, a: 0.1800, b: 57.8462 },
-  { limit: 865, a: 0.1890, b: 64.3365 },
-  { limit: 1282, a: 0.3227, b: 180.0385 },
-  { limit: 2596, a: 0.3200, b: 176.5769 },
-  { limit: 3653, a: 0.3900, b: 358.3077 },
-  { limit: Infinity, a: 0.4700, b: 650.6154 },
+// ATO NAT 1004, Schedule 1, Scale 2 (tax-free threshold claimed).
+// The July 2026 table applies the legislated 15% resident rate and updated Medicare thresholds.
+// Source: https://softwaredevelopers.ato.gov.au/PAYGWTaxtables
+const SCALE_2_SCHEDULES = [
+  {
+    effectiveFrom: new Date(2024, 6, 1),
+    label: 'ATO NAT 1004, Jul 2024',
+    coefficients: [
+      { limit: 361, a: 0, b: 0 },
+      { limit: 500, a: 0.1600, b: 57.8462 },
+      { limit: 625, a: 0.2600, b: 107.8462 },
+      { limit: 721, a: 0.1800, b: 57.8462 },
+      { limit: 865, a: 0.1890, b: 64.3365 },
+      { limit: 1282, a: 0.3227, b: 180.0385 },
+      { limit: 2596, a: 0.3200, b: 176.5769 },
+      { limit: 3653, a: 0.3900, b: 358.3077 },
+      { limit: Infinity, a: 0.4700, b: 650.6154 },
+    ],
+  },
+  {
+    effectiveFrom: new Date(2026, 6, 1),
+    label: 'ATO NAT 1004, Jul 2026',
+    coefficients: [
+      { limit: 362, a: 0, b: 0 },
+      { limit: 538, a: 0.1500, b: 54.3462 },
+      { limit: 673, a: 0.2500, b: 108.2135 },
+      { limit: 721, a: 0.1700, b: 54.3473 },
+      { limit: 865, a: 0.1790, b: 60.8377 },
+      { limit: 1282, a: 0.3227, b: 185.1935 },
+      { limit: 2596, a: 0.3200, b: 181.7319 },
+      { limit: 3653, a: 0.3900, b: 363.4627 },
+      { limit: Infinity, a: 0.4700, b: 655.7704 },
+    ],
+  },
 ];
+
+function getScale2Schedule(asAt = new Date()) {
+  let schedule = SCALE_2_SCHEDULES[0];
+  for (const candidate of SCALE_2_SCHEDULES) {
+    if (asAt >= candidate.effectiveFrom) schedule = candidate;
+  }
+  return schedule;
+}
 
 // ── State ──────────────────────────────────────────────────
 const state = { weeks: [null, null] };
@@ -589,7 +621,8 @@ function runCalc() {
 
   const preTaxDed = parseFloat(document.getElementById('preTaxInput').value) || 0;
   const taxable = Math.max(0, gross - preTaxDed);
-  const tax = estimateTax(taxable);
+  const taxSchedule = getScale2Schedule();
+  const tax = estimateTax(taxable, taxSchedule);
   const net = taxable - tax;
   const superBase = gross - ot2xAmt - phWkdAmt;
   const superAmt  = superBase * SUPER_GUARANTEE_RATE;
@@ -668,7 +701,7 @@ function runCalc() {
   }
 
   sec('Tax (Estimate)');
-  row('PAYG Withholding', 'ATO NAT 1004, Jun 2024 · Fortnightly Scale 2', tax, true);
+  row('PAYG Withholding', `${taxSchedule.label} · Fortnightly Scale 2`, tax, true);
 
   rows.push(`<div class="bd-row bd-total"><span class="bd-desc">Estimated Net Pay</span><span class="bd-val">${fmt(net)}</span></div>`);
 
@@ -689,9 +722,9 @@ function getPaysLeftInFY() {
   return { count, next, fyStartYear };
 }
 
-function estimateTax(fortnightlyTaxable) {
+function estimateTax(fortnightlyTaxable, schedule = getScale2Schedule()) {
   const weeklyEquivalent = Math.floor(Math.max(0, fortnightlyTaxable) / 2) + 0.99;
-  const row = SCALE_2_COEFFICIENTS.find(c => weeklyEquivalent < c.limit) || SCALE_2_COEFFICIENTS[SCALE_2_COEFFICIENTS.length - 1];
+  const row = schedule.coefficients.find(c => weeklyEquivalent < c.limit) || schedule.coefficients[schedule.coefficients.length - 1];
   if (row.a === 0) return 0;
   const weeklyWithholding = Math.max(0, Math.floor((row.a * weeklyEquivalent) - row.b + 0.5 + Number.EPSILON));
   return weeklyWithholding * 2;
