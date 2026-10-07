@@ -65,7 +65,7 @@ All figures are estimates for reference, not payroll advice.
 
 The single HTML script contains the pure `calculatePay` function. It accepts schedule entries, resolved rates, a resolved tax schedule, deductions, site rate/super choice and JumpUp rate. It returns cent-rounded breakdown lines, gross, taxable income, PAYG, net, eligible super base/amount, worked hours and paid base hours. The interface renders those results. `resolveRates`, `currentPeriodIdx` and `getScale2Schedule` allow tests to resolve historical inputs independently.
 
-The `tests/` directory is intentionally ignored by Git and retained locally. The validation commands below require those local test files.
+The `tests/` directory includes the anonymised fixtures, calculation regression suite and optional browser smoke checks. Private PDFs and generated screenshots remain ignored.
 
 Run the anonymised regression suite with Node (no dependencies):
 
