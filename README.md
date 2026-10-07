@@ -1,86 +1,124 @@
 # NS Tester Pay Calculator v1.5
 
-A standalone calculator for Metro Trains Night Shift Testing staff. Open `index.html` in a modern browser, select a grade, and enter a fortnightly schedule. It works offline with no server, installation or external assets.
+A single-file HTML pay calculator for Metro Trains Night Shift Testing staff. Enter your fortnightly schedule and get an estimated pay breakdown instantly — no server, no install, runs entirely in the browser.
 
-## Using the calculator
+## Features
 
-- Choose each day's shift type; click its hours to edit. Weekday and Sunday hours above 9.5 automatically become overtime.
-- Sick and Bonus / WLBP have separate choices. Annual Leave uses Sunday treatment on the SUN rows.
-- Enter optional pre-tax deductions. They reduce taxable income, not eligible super earnings.
-- When a Project shift is present, edit Site Allowance and JumpUp-Infra rates in the breakdown to four decimal places. The site rate defaults to $10.7500/hr with **Include site allowance in super** off. Turn it on for eligible construction site allowances. JumpUp defaults to $5.0955/hr and is included in super.
-- Reset restores the default 76-hour schedule and recalculates immediately. It keeps the selected grade, deductions and allowance settings.
-- There are no date controls: the interface estimates current pay using today's wage period and tax schedule.
+- **Manual schedule entry** — choose each day's shift type from a drop-down, click hours to edit
+- **All shift types** — Weekday NS, Sunday NS, Project EX, Overtime, PH Worked, Rostered PH, Non Rostered PH, Sick, Bonus / WLBP, Annual Leave, Day Off
+- **Automatic overtime split** — Weekday and Sunday shifts over 9.5h automatically split into normal hours + overtime (200%) for any excess
+- **Pay period aware** — rates update automatically based on today's date across all periods from Jul-23 to Jan-27, including the 1% rise from Jan-26
+- **Hours summary** — Hours Worked counts actual shifts; Hours Paid also includes paid leave and unworked public holidays. Neither includes penalty hours
+- **Reset button** — restore the schedule to the default template in one click
+- **Pre-tax deductions** — enter salary sacrifice, car lease, purchased leave etc. to adjust taxable income
+- **Tax estimate** — PAYG withholding calculated as fortnightly Scale 2 using the date-effective ATO NAT 1004 Schedule 1 formulas, including the 1 July 2026 update
+- **Super estimate** — 12% SG on eligible earnings (excludes Overtime and PH Worked pay; A440 and Annual Leave Loading are included)
+- **Annual estimate** — projects your fortnightly result × 26 for yearly gross, tax and net; super uses a capped projection assumption ($30,000 until 30 Jun 2026, then $32,500 from 1 Jul 2026)
+- **Pays remaining** — shows pays left in the current financial year and the next pay date
 
-## Rates and timing
+## Pay Grades
 
-Available grades: VB8, VZI, VZN, VZO, VZJ, VZK and VZL. The combined hourly rate is base plus Testing Allowance A078. Verified VZK combined-rate overrides are $105.9008 for Jan-26 and $107.7541 for Jul-26. These preserve the existing base and testing arrays without inventing a different split. Other grades' combined rates are unchanged.
+Grades available: VB8 (Trainee Tester), VZI (Tester L1), VZN (Tester L2), VZO (Senior Tester L1), VZJ (Senior Tester L2), VZK (Technical Officer L1), VZL (Technical Officer L2).
 
-A440 is $1.9731/hr for Jan-26 and $2.0076/hr for Jul-26. The July 2026 wage period begins **12 July 2026**. The fortnight 28 June–11 July, paid 16 July, still uses Jan-26 wages but the July tax schedule. Other existing wage dates and values are retained; unverified grades have not been independently reconciled.
+Each grade has a base hourly rate. The **Testing Allowance (A078)** is added on top to form the **combined rate**, which is the basis for all pay calculations. The grade selector shows the combined rate for the current pay period.
 
-Fortnightly PAYG uses the existing ATO NAT 1004 Schedule 1, Scale 2 coefficients and rounding (tax-free threshold claimed). Tax follows the **payment date**, independently of the wage period. The [official July 2026 schedule](https://www.legislation.gov.au/F2026L00716/asmade/2026-06-12/text/original/epub/OEBPS/document_1/document_1.html) starts on 1 July 2026. Historical tests supply their wage period and payment date separately; the interface remains current-pay only.
+For VZK, the verified combined rates are $105.9008/hr for Jan-26 and $107.7541/hr from 12 July 2026. A440 is $1.9731/hr and $2.0076/hr respectively. The July tax schedule starts separately on 1 July 2026.
 
-## Pay elements
+## How Each Shift Type Is Calculated
 
-Percentages below apply to the combined rate unless indicated otherwise.
+All rates below use the **combined rate** (base + A078 testing allowance) unless stated otherwise.
 
-| Schedule entry | Pay | A440 | Actual worked hours |
-|---|---|---|---|
-| Weekday NS | Normal 100% + night penalty 30%; excess above 9.5h at 200% | Yes, including excess | Yes |
-| Sunday NS | Normal 100% + weekend penalty 100%; excess above 9.5h at 200% | Yes, including excess | Yes |
-| Project EX | Normal + penalty, each at the greater of combined rate or existing VZI-derived project floor; site and JumpUp allowances | Yes | Yes |
-| Overtime | 200% | Yes | Yes |
-| PH Worked | Separate base 100% + penalty 150% | Yes | Yes |
-| Rostered PH, unworked | 100% | Yes | No |
-| Non Rostered PH | 100%, default 7.6h | Yes | No |
-| Sick | 100% | Yes | No |
-| Bonus / WLBP | 100% | No | No |
-| Annual Leave, weekday | Base 100% + excess 10% + loading 20% | Yes | No |
-| Annual Leave, Sunday | Base 100% + excess 80% + loading 20% | Yes | No |
-| Day Off | None | No | No |
+### Weekday NS
 
-Corrected A440 eligibility applies throughout all supported wage periods, with no new eligibility cutoff.
+- Normal pay: hours (capped at 9.5h) × combined rate
+- NS Weekday Penalty: same hours × 30% of combined rate
+- Hours over 9.5h automatically split to Overtime (see below)
+- E Grade Electrical — Infra (A440) applies to all hours including any overtime excess
 
-**Hours Worked** counts weekday, Sunday, project, overtime and PH Worked hours. **Hours Paid** counts every paid schedule hour once, including leave, Bonus / WLBP and unworked public holidays. Neither includes penalty equivalent hours; automatic overtime splits do not duplicate hours or A440.
+### Sunday NS
 
-## Rounding
+- Normal pay: hours (capped at 9.5h) × combined rate
+- Weekend NS Penalty: same hours × 100% of combined rate
+- Hours over 9.5h automatically split to Overtime (see below)
+- E Grade Electrical — Infra (A440) applies to all hours including any overtime excess
 
-Derived percentages retain full precision, rather than using the four-decimal rate printed on a payslip. Pay elements round to cents before gross is summed:
+### Project EX
 
-- Sick and Annual Leave base pay, and weekday annual leave excess, round per entered day then sum. Four 9.5h leave days at $105.9008 produce $4,024.24; three weekday leave excess days produce $301.83. Two 9.5h sick days at $107.7541 produce $2,047.32.
-- Other elements aggregate by pay code and rate. Normal pay combines weekday, Sunday and project hours when their rate matches. A project floor above the combined rate creates a separate normal line. Rostered and non-rostered unworked holidays display on separate lines. They retain the shared PH Gazette rounding total; any cent remainder is allocated to the non-rostered line.
-- PH Worked base and penalty round separately: 5h at $105.9008 produces $529.50 base plus $794.26 penalty.
-- Fortnightly PAYG keeps the existing weekly-equivalent calculation: discard cents from half the taxable fortnight, add $0.99, apply Scale 2, round weekly withholding to a dollar, then double it.
+- Normal pay: hours × project rate (combined rate, floored at VZI OT rate)
+- Penalty pay: hours × project rate again (effectively 200% total)
+- Site Allowance: hours × $10.75/hr (editable to four decimal places). Excluded from super by default; select **Include site allowance in super** for eligible construction allowances
+- JumpUp-Infra: hours × $5.0955/hr (editable in the breakdown; included in super)
+- E Grade (A440) applies
 
-## Super and annual projection
+### Overtime (dedicated shift)
 
-The ordinary fortnightly estimate is 12% of eligible earnings. It excludes overtime and PH Worked base/penalty pay, and excludes site allowance unless selected. It includes A440 amounts (including units attached to OT and PH Worked), annual leave loading, JumpUp, ordinary project pay and other paid leave. Pre-tax car deductions do not reduce this base. These are this calculator's agreed payroll assumptions, reconciled against the supplied VZK evidence.
+- Pay: hours × combined rate × 200%
+- E Grade (A440) applies
+- This pay is excluded from super; A440 remains included
 
-No payroll history, remaining contribution limit or adjustment input is modelled. Capped pays and super-only adjustments can therefore differ from the ordinary estimate. The reference May 30 contribution was capped at $1,388.13 versus the $1,442.57 ordinary estimate; June 13 had no current contribution versus $1,374.09 estimated; June 23 recorded a $747.95 super-only adjustment with no wages.
+### PH Worked
 
-The annual projection assumes 26 identical fortnights. Its super figure retains the existing cap assumption: $30,000 before 1 July 2026 and $32,500 thereafter. That cap applies only to the projection, not the ordinary fortnightly result; it does not predict actual payroll contribution limits or adjustments. The pays-remaining indicator retains the existing fortnightly Tuesday cadence and does not predict changed payment dates.
+- Pay: hours × combined rate × 250%, shown as base 100% + penalty 150%
+- E Grade (A440) applies
+- This pay is excluded from super; A440 remains included
 
-All figures are estimates for reference, not payroll advice.
+### Sick
 
-## Implementation and validation
+- Pay: hours × combined rate (100%)
+- E Grade (A440) applies
 
-The single HTML script contains the pure `calculatePay` function. It accepts schedule entries, resolved rates, a resolved tax schedule, deductions, site rate/super choice and JumpUp rate. It returns cent-rounded breakdown lines, gross, taxable income, PAYG, net, eligible super base/amount, worked hours and paid base hours. The interface renders those results. `resolveRates`, `currentPeriodIdx` and `getScale2Schedule` allow tests to resolve historical inputs independently.
+### Bonus / WLBP
 
-The `tests/` directory includes the anonymised fixtures, calculation regression suite and optional browser smoke checks. Private PDFs and generated screenshots remain ignored.
+- Pay: hours × combined rate (100%)
+- E Grade (A440) does not apply
 
-Run the anonymised regression suite with Node (no dependencies):
+### Rostered PH
 
-```sh
-node --test tests/calculator.test.cjs
-```
+- Pay: rostered hours × combined rate (100%)
+- E Grade (A440) applies
 
-The 12 regular fixtures reproduce gross, taxable income, PAYG and net to the cent and all 10 ordinary recorded super contributions. Capped and super-only cases are checked separately. Fixtures reconstruct equivalent schedules from aggregate hours; they do not assert actual shift dates. Tests also cover daily rounding, every eligibility category, automatic OT, wage/tax boundaries, other grades, the project floor, allowance precision, super choice and deductions.
+### Non Rostered PH
 
-Optional browser smoke checks require Playwright and Microsoft Edge:
+- Pay: hours × combined rate (100%), defaulting to 7.6h
+- E Grade (A440) applies
 
-```sh
-node tests/browser-smoke.cjs
-```
+### Annual Leave — Weekday
 
-They open the local HTML with network access blocked, check schedule editing, grades, deductions, reset, allowance controls and mobile overflow, and save screenshots under ignored `tmp/browser/`.
+- Base pay: hours × combined rate
+- NS Excess: hours × 10% of combined rate
+- Annual Leave Loading: hours × 20% of combined rate
+- E Grade (A440) applies
 
-Private reference PDFs and personal details are not test assets and must not be committed. The original reference files stay outside this worktree.
+### Annual Leave — Sunday
+
+- Base pay: hours × combined rate
+- NS Sunday Excess: hours × 80% of combined rate
+- Annual Leave Loading: hours × 20% of combined rate
+- E Grade (A440) applies
+
+## Allowances
+
+| Allowance | Code | Applies to |
+|---|---|---|
+| Testing Allowance | A078 | All shift types (built into combined rate) |
+| E Grade Electrical — Infra | A440 | Weekday, Sunday, Project EX, Overtime, PH Worked, Rostered PH, Non Rostered PH, Sick, Annual Leave |
+| Annual Leave Loading | — | All Annual Leave hours |
+| Site Allowance | — | Project EX shifts only |
+| JumpUp-Infra | — | Project EX shifts only |
+
+## Usage
+
+1. Open `index.html` in any modern browser (or visit the GitHub Pages URL)
+2. Select your pay grade
+3. Use the drop-downs to set each day's shift type; click hours to adjust if needed
+4. Optionally enter pre-tax deductions
+
+## Notes
+
+- All figures are estimates only — for reference purposes, not payroll advice
+- Tax uses the ATO NAT 1004 PAYG withholding formula in effect on the current date for fortnightly Scale 2 payments
+- Super estimates ordinary fortnightly contributions; capped or adjustment pays can differ. Pre-tax car deductions do not reduce the super base
+- Annual estimate assumes 26 identical fortnights for gross, tax and net; super uses a capped projection assumption ($30,000 until 30 Jun 2026, then $32,500 from 1 Jul 2026)
+- Site Allowance and JumpUp-Infra rates are editable inline in the breakdown
+- Pay elements round to cents before gross is added. Sick and Annual Leave base pay, and weekday annual leave excess, round per day; percentage rates keep full precision
+- Run calculation tests with `node --test tests/calculator.test.cjs`
