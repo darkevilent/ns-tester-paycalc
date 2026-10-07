@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NS Testing Pay Calculator v1.4</title>
+<title>NS Testing Pay Calculator v1.5</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap');
+/* System fonts keep the standalone calculator fully offline. */
 
 :root {
   --c-primary:   #006bc2;
@@ -88,7 +88,7 @@ body{
 .gross-value{font-size:50px;font-weight:700;color:#fff;letter-spacing:0;line-height:60px}
 .gross-note{font-size:13px;color:rgba(255,255,255,0.4);margin-top:9px}
 
-.numbers-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}
+.numbers-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:15px}
 .num-card{background:var(--c-card);border-radius:var(--r-sm);padding:18px 15px;box-shadow:var(--sh-sm)}
 .num-label{font-size:12px;color:var(--c-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
 .num-value{font-size:22px;font-weight:700;color:var(--c-primary);line-height:26px}
@@ -192,7 +192,7 @@ body{
     <div class="site-header-divider"></div>
     <div class="site-header-title">
       <strong>Metro Trains Melbourne</strong>
-      NS Testing Pay Calculator <span style="font-size:0.75em;opacity:0.6;font-weight:400;">v1.4</span>
+      NS Testing Pay Calculator <span style="font-size:0.75em;opacity:0.6;font-weight:400;">v1.5</span>
     </div>
   </div>
 </header>
@@ -206,7 +206,7 @@ body{
       <option value="">— Select your grade —</option>
     </select>
     <div class="grade-pill" id="gradePill" style="display:none">
-      Base <strong id="gradeRateDisplay"></strong> &nbsp;·&nbsp; <span id="gradePeriodDisplay"></span>
+      Combined <strong id="gradeRateDisplay"></strong> &nbsp;·&nbsp; <span id="gradePeriodDisplay"></span>
     </div>
   </div>
 
@@ -229,7 +229,7 @@ body{
     <div class="ded-row">
       <span class="ded-prefix">$</span>
       <input type="number" id="preTaxInput" placeholder="0.00" min="0" step="0.01" oninput="runCalc()">
-      <span class="ded-hint">salary sacrifice, car lease, purchased leave, etc.</span>
+      <span class="ded-hint">reduces taxable income; leaves eligible super earnings unchanged</span>
     </div>
   </div>
 
@@ -254,16 +254,21 @@ body{
       <div class="num-card">
         <div class="num-label">Est. Super</div>
         <div class="num-value" id="superVal">—</div>
-        <div class="num-note">12% SG on gross (2025–26)</div>
+        <div class="num-note">12% of eligible earnings</div>
       </div>
       <div class="num-card">
         <div class="num-label">Hours Worked</div>
         <div class="num-value" id="hoursVal">—</div>
-        <div class="num-note">Weekday, Sun, EX, OT, PH, Rostered PH</div>
+        <div class="num-note">Weekday, Sunday, project, OT &amp; PH Worked</div>
+      </div>
+      <div class="num-card">
+        <div class="num-label">Hours Paid</div>
+        <div class="num-value" id="paidHoursVal">—</div>
+        <div class="num-note">Includes paid leave &amp; unworked PH; excludes penalty hours</div>
       </div>
     </div>
     <div class="annual-card">
-      <div class="annual-label">Annual Estimate <span class="annual-note">gross, tax &amp; net x 26; super capped at <span id="annSuperCapNote">$30,000</span></span></div>
+      <div class="annual-label">Annual Projection <span class="annual-note">assumes 26 identical fortnights; super capped at <span id="annSuperCapNote">$30,000</span></span></div>
       <div class="annual-cols">
         <div><div class="annual-item-label">Gross</div><div class="annual-item-val" id="annGross">—</div></div>
         <div><div class="annual-item-label">Tax</div><div class="annual-item-val" id="annTax">—</div></div>
@@ -276,7 +281,7 @@ body{
     <div class="breakdown-card">
       <h2>Breakdown</h2>
       <div id="bdRows"></div>
-      <p class="footnote">* PAYG withholding uses the ATO NAT 1004 Schedule 1 formula in effect on the current date for fortnightly Scale 2 payments. All figures are indicative only.</p>
+      <p class="footnote">* PAYG withholding uses the ATO NAT 1004 Schedule 1 formula in effect on the current date for fortnightly Scale 2 payments. Ordinary fortnightly super includes A440 and annual leave loading; excludes OT and PH Worked pay, plus site allowance unless selected. Car deductions do not reduce the super base. Capped and adjustment pays can differ. The annual super cap is a projection assumption, not a fortnightly payroll cap. All figures are indicative only.</p>
     </div>
   </div>
 
@@ -288,7 +293,7 @@ body{
 const PERIOD_LABELS  = ['Jul-23','Jan-24','Jul-24','Jan-25','Jul-25','Jan-26','Jul-26','Jan-27'];
 const PERIOD_STARTS  = [
   new Date(2023,6,1), new Date(2024,0,1), new Date(2024,6,1), new Date(2025,0,1),
-  new Date(2025,6,1), new Date(2026,0,1), new Date(2026,6,1), new Date(2027,0,1),
+  new Date(2025,6,1), new Date(2026,0,1), new Date(2026,6,12), new Date(2027,0,1),
 ];
 const PAY_GRADES = [
   { code:'VB8', desc:'Trainee Tester',          rates:[58.6868,60.1540,61.3571,62.5842,63.6794,65.4417,66.5870,67.7522] },
@@ -300,17 +305,19 @@ const PAY_GRADES = [
   { code:'VZL', desc:'Technical Officer Level 2',rates:[94.6056,96.9707,98.9101,100.8883,102.6538,105.4947,107.3409,109.2194] },
 ];
 // E Grade Electrical — Infra (A440), with 1% Metro Tunnel uplift from Jan-26.
-const EGRADE_RATES        = [1.7695,1.8137,1.8500,1.8870,1.9200,1.9731,2.0077,2.0429];
-// Testing Allowance (A078) — applies to every worked hour (1% raise from Jan-26)
+const EGRADE_RATES        = [1.7695,1.8137,1.8500,1.8870,1.9200,1.9731,2.0076,2.0429];
+// Testing Allowance (A078) — included in combined pay rates (1% raise from Jan-26)
 const TESTING_ALLOW_RATES = [5.9297,6.0779,6.1995,6.3235,6.4342,6.6123,6.7280,6.8458];
 // OT Penalty is proportional to base (ratio derived from payslip)
 const OT_PEN_MULT = 86.6822 / 77.9758;   // ≈ 1.1117
 // Project allowance defaults; both remain editable in the breakdown.
 let siteJumpRate = 10.75;
 let jumpUpRate = 5.0955;
+let siteInSuper = false;
+// Verified combined rates; do not infer a different base/A078 split.
+const COMBINED_RATE_OVERRIDES = { VZK: { 5: 105.9008, 6: 107.7541 } };
 
-function currentPeriodIdx() {
-  const now = new Date();
+function currentPeriodIdx(now = new Date()) {
   let idx = 0;
   for (let i = 0; i < PERIOD_STARTS.length; i++) {
     if (now >= PERIOD_STARTS[i]) idx = i;
@@ -324,7 +331,7 @@ function populateGradeSelect() {
   PAY_GRADES.forEach(g => {
     const opt = document.createElement('option');
     opt.value = g.code;
-    opt.textContent = `${g.code} — ${g.desc}  ($${(g.rates[pi] + TESTING_ALLOW_RATES[pi]).toFixed(2)}/hr)`;
+    opt.textContent = `${g.code} — ${g.desc}  ($${resolveRates(g.code, pi).combined.toFixed(2)}/hr)`;
     sel.appendChild(opt);
   });
 }
@@ -332,27 +339,17 @@ function populateGradeSelect() {
 function updateGrade() {
   const code  = document.getElementById('gradeSelect').value;
   const pill  = document.getElementById('gradePill');
-  if (!code) { pill.style.display = 'none'; return; }
-
-  const grade = PAY_GRADES.find(g => g.code === code);
-  const pi    = currentPeriodIdx();
-  const base  = grade.rates[pi];
-
-  // All rates derived from combined (base + testing allowance) — matches payslip
-  R.base           = base;
-  R.testAllow       = TESTING_ALLOW_RATES[pi];
-  R.eGrade         = EGRADE_RATES[pi];
-  const combined = base + R.testAllow;
-  R.night   = combined * 0.30;         // NS weekday penalty = 30% of combined
-  R.wePen   = combined;                // weekend penalty = 100% of combined rate
-  R.ot2x    = combined * 2;
-  R.ot25x   = combined * 2.5;
-  // EX floor = VZI OT penalty rate for this period (fixed floor, higher grades earn their own rate)
-  const vziCombined = PAY_GRADES.find(g => g.code === 'VZI').rates[pi] + TESTING_ALLOW_RATES[pi];
-  R.exFloor = vziCombined * OT_PEN_MULT;
+  if (!code) {
+    pill.style.display = 'none';
+    ['schedSec','dedSec','resultSec'].forEach(id => document.getElementById(id).style.display = 'none');
+    R.base = 0;
+    return;
+  }
+  const pi = currentPeriodIdx();
+  Object.assign(R, resolveRates(code, pi));
 
   // Update pill
-  document.getElementById('gradeRateDisplay').textContent = `$${(base + R.testAllow).toFixed(2)}/hr`;
+  document.getElementById('gradeRateDisplay').textContent = `$${R.combined.toFixed(4)}/hr`;
   document.getElementById('gradePeriodDisplay').textContent = PERIOD_LABELS[pi];
   pill.style.display = 'inline-block';
   document.getElementById('schedSec').style.display = 'block';
@@ -364,10 +361,7 @@ function updateGrade() {
 // ── Constants ──────────────────────────────────────────────
 const R = {
   base:             0,
-  night:            0,
-  wePen:            0,
-  ot2x:             0,
-  ot25x:            0,
+  combined:         0,
   eGrade:           0,
   testAllow:        0,
   exFloor:          0,
@@ -383,16 +377,17 @@ function getSuperConcessionalCap(date = new Date()) {
   return (SUPER_CONCESSIONAL_CAPS.find(cap => date >= cap.start) || SUPER_CONCESSIONAL_CAPS[SUPER_CONCESSIONAL_CAPS.length - 1]).amount;
 }
 
-const TYPE_ORDER = ['weekday','sunday','ex_project','overtime','ph_worked','rostered_ph','pholeave','sick','annual_leave','dayoff'];
+const TYPE_ORDER = ['weekday','sunday','ex_project','overtime','ph_worked','rostered_ph','pholeave','sick','bonus_wlbp','annual_leave','dayoff'];
 const TYPE_LABEL = {
   weekday:     'Weekday (130%)',
   sunday:      'Sunday (200%)',
   ex_project:  'Project (200%)',
   overtime:    'Overtime (200%)',
   ph_worked:   'PH Worked (250%)',
-  sick:        'Sick / Bonus / WLBP',
+  sick:        'Sick',
+  bonus_wlbp:  'Bonus / WLBP',
   rostered_ph: 'Rostered PH',
-  pholeave:    'Non-Roster PH Leave',
+  pholeave:    'Non Rostered PH',
   annual_leave:'Annual Leave',
   dayoff:      'Day Off',
 };
@@ -403,6 +398,7 @@ const TYPE_BG = {
   overtime:    'b-overtime',
   ph_worked:   'b-ph_worked',
   sick:        'b-sick',
+  bonus_wlbp:  'b-sick',
   rostered_ph: 'b-rostered_ph',
   pholeave:    'b-pholeave',
   annual_leave:'b-annual_leave',
@@ -469,6 +465,7 @@ function initSchedule() {
   state.weeks[0] = defaultWeek();
   state.weeks[1] = defaultWeek();
   renderSchedule();
+  runCalc();
 }
 
 // ── Render editable schedule ───────────────────────────────
@@ -550,82 +547,116 @@ function editHours(spanEl, wi, di) {
 }
 
 // ── Pay calculation ────────────────────────────────────────
+function resolveRates(code, periodIndex) {
+  const grade = PAY_GRADES.find(g => g.code === code);
+  if (!grade || !Number.isInteger(periodIndex) || periodIndex < 0 || periodIndex >= PERIOD_STARTS.length) {
+    throw new RangeError('Unknown grade or rate period');
+  }
+  const base = grade.rates[periodIndex];
+  const testAllow = TESTING_ALLOW_RATES[periodIndex];
+  return {
+    base, testAllow,
+    combined: COMBINED_RATE_OVERRIDES[code]?.[periodIndex] ?? base + testAllow,
+    eGrade: EGRADE_RATES[periodIndex],
+    exFloor: (PAY_GRADES.find(g => g.code === 'VZI').rates[periodIndex] + testAllow) * OT_PEN_MULT,
+  };
+}
+
+// Round amounts, not derived hourly percentages. Accumulate rounded cents so the
+// displayed elements sum exactly to gross. Leave base and weekday leave excess
+// are rounded per entered day, matching the source payroll elements.
+const cents = value => Math.round((value + Number.EPSILON) * 100);
+function calculatePay({ entries, rates, taxSchedule, deductions = 0,
+  siteRate = 10.75, siteInSuper = false, jumpUpRate = 5.0955 }) {
+  if (!taxSchedule?.coefficients) throw new TypeError('A resolved tax schedule is required');
+  const hours = Object.fromEntries(TYPE_ORDER.map(type => [type, 0]));
+  let workedHours = 0, paidBaseHours = 0, eGradeHours = 0;
+  let annualWeekday = 0, annualSunday = 0;
+  let sickCents = 0, annualCents = 0, annualExcessCents = 0;
+  const combined = rates.combined;
+  for (const entry of entries) {
+    const { type, day } = entry;
+    const value = Number(entry.hours);
+    const hrs = Number.isFinite(value) ? Math.max(0, value) : 0;
+    if (!Object.hasOwn(hours, type) || type === 'dayoff') continue;
+    paidBaseHours += hrs;
+    if (type !== 'bonus_wlbp') eGradeHours += hrs;
+    if (['weekday', 'sunday', 'ex_project', 'overtime', 'ph_worked'].includes(type)) workedHours += hrs;
+    if (type === 'weekday' || type === 'sunday') {
+      hours[type] += Math.min(hrs, 9.5);
+      hours.overtime += Math.max(0, hrs - 9.5);
+    } else {
+      hours[type] += hrs;
+    }
+    if (type === 'sick') sickCents += cents(hrs * combined);
+    if (type === 'annual_leave') {
+      annualCents += cents(hrs * combined);
+      if (day === 'SUN') annualSunday += hrs;
+      else {
+        annualWeekday += hrs;
+        annualExcessCents += cents(hrs * combined * 0.10);
+      }
+    }
+  }
+
+  const lines = [];
+  function add(code, label, hrs, rate, superEligible = true, section = 'Pay Elements', perDayCents) {
+    if (hrs <= 0) return;
+    const amountCents = perDayCents ?? cents(hrs * rate);
+    lines.push({ code, label, hours: hrs, rate, amount: amountCents / 100,
+      amountCents, superEligible, section, perDay: perDayCents !== undefined });
+  }
+  const exRate = Math.max(combined, rates.exFloor);
+  const mergedProject = exRate === combined;
+  add('normal', 'Normal', hours.weekday + hours.sunday + (mergedProject ? hours.ex_project : 0), combined);
+  if (!mergedProject) add('projectNormal', 'Project — Normal (floor)', hours.ex_project, exRate);
+  add('night', 'Weekday NS Penalty 30%', hours.weekday, combined * 0.30);
+  add('weekend', 'Weekend NS Penalty 100%', hours.sunday, combined);
+  add('projectPenalty', 'Project — Penalty', hours.ex_project, exRate);
+  add('overtime', 'Overtime (200%)', hours.overtime, combined * 2, false);
+  add('phWorked', 'PH Worked (100%)', hours.ph_worked, combined, false);
+  add('phPenalty', 'PH Worked Penalty (150%)', hours.ph_worked, combined * 1.5, false);
+  add('sick', 'Sick (100%)', hours.sick, combined, true, 'Pay Elements', sickCents);
+  add('bonus', 'Bonus / WLBP (100%)', hours.bonus_wlbp, combined);
+  // Both unworked PH categories share the PH Gazette pay code and rate.
+  add('phGazette', 'Unworked PH (rostered / non-rostered)', hours.rostered_ph + hours.pholeave, combined);
+  const phGazette = lines.find(line => line.code === 'phGazette');
+  if (phGazette) {
+    const rosteredCents = cents(hours.rostered_ph * combined);
+    // Separate display rows while preserving rounding of the shared pay code.
+    phGazette.parts = [
+      { label: 'Rostered PH', hours: hours.rostered_ph, amount: rosteredCents / 100 },
+      { label: 'Non Rostered PH', hours: hours.pholeave, amount: (phGazette.amountCents - rosteredCents) / 100 },
+    ].filter(part => part.hours > 0);
+  }
+  add('annual', 'Annual Leave', hours.annual_leave, combined, true, 'Pay Elements', annualCents);
+  add('annualExcess', 'Annual Leave NS Excess (10%)', annualWeekday, combined * 0.10, true, 'Pay Elements', annualExcessCents);
+  add('annualSunday', 'Annual Leave NS Sunday Excess (80%)', annualSunday, combined * 0.80);
+  add('annualLoading', 'Annual Leave Loading (20%)', hours.annual_leave, combined * 0.20, true, 'Allowances');
+  // A440 itself remains super eligible, including its OT and PH Worked units.
+  add('a440', 'E Grade Electrical — Infra (A440)', eGradeHours, rates.eGrade, true, 'Allowances');
+  add('site', 'Site Allowance', hours.ex_project, Math.max(0, siteRate), siteInSuper, 'Allowances');
+  add('jumpUp', 'JumpUp-Infra', hours.ex_project, Math.max(0, jumpUpRate), true, 'Allowances');
+
+  const grossCents = lines.reduce((total, line) => total + line.amountCents, 0);
+  const gross = grossCents / 100;
+  const taxable = Math.max(0, grossCents - cents(Math.max(0, deductions))) / 100;
+  const tax = estimateTax(taxable, taxSchedule);
+  const superBase = lines.filter(line => line.superEligible).reduce((total, line) => total + line.amountCents, 0) / 100;
+  return { lines, gross, taxable, tax, net: cents(taxable - tax) / 100,
+    superBase, superAmount: cents(superBase * SUPER_GUARANTEE_RATE) / 100,
+    workedHours: cents(workedHours) / 100, paidBaseHours: cents(paidBaseHours) / 100 };
+}
+
 function runCalc() {
   if (R.base === 0) { document.getElementById('resultSec').style.display = 'none'; return; }
-  const allDays = [...state.weeks[0].days, ...state.weeks[1].days];
-
-  let wdHrs=0, sunHrs=0, exHrs=0;
-  let otHrs=0, phWkdHrs=0;
-  let sickHrs=0, rosteredPhHrs=0, phLeaveHrs=0;
-  let alWdHrs=0, alSunHrs=0;
-  let nightHrs=0, workedHrs=0, eGradeHrs=0;
-
-  allDays.forEach(d => {
-    const h = d.hours;
-    switch (d.type) {
-      case 'weekday': {
-        const reg = Math.min(h, 9.5), ot = Math.max(0, h - 9.5);
-        wdHrs += reg; nightHrs += reg; workedHrs += h; eGradeHrs += h; otHrs += ot; break;
-      }
-      case 'sunday': {
-        const reg = Math.min(h, 9.5), ot = Math.max(0, h - 9.5);
-        sunHrs += reg; workedHrs += h; eGradeHrs += h; otHrs += ot; break;
-      }
-      case 'ex_project':
-        exHrs     += h; workedHrs += h; eGradeHrs += h; break;
-      case 'overtime':
-        otHrs     += h; workedHrs += h; eGradeHrs += h; break;
-      case 'ph_worked':
-        phWkdHrs  += h; workedHrs += h; eGradeHrs += h; break;
-      case 'sick':
-        sickHrs   += h; break;
-      case 'rostered_ph':
-        rosteredPhHrs += h; workedHrs += h; eGradeHrs += h; break;
-      case 'pholeave':
-        phLeaveHrs  += h; break;
-      case 'annual_leave':
-        if (d.day === 'SUN') alSunHrs += h; else alWdHrs += h;
-        break;
-    }
-  });
-
-  const combined       = R.base + R.testAllow;
-  const wdNormalAmt    = wdHrs        * combined;
-  const wdNightAmt     = nightHrs     * R.night;
-  const sunNormalAmt   = sunHrs       * combined;
-  const sunWePenAmt    = sunHrs       * R.wePen;
-  const exRate         = Math.max(combined, R.exFloor);
-  const exNormalAmt    = exHrs        * exRate;
-  const exPenAmt       = exHrs        * exRate;
-  const exAllow        = exHrs        * siteJumpRate;
-  const jumpUpAmt      = exHrs        * jumpUpRate;
-  const ot2xAmt        = otHrs        * R.ot2x;
-  const phWkdAmt       = phWkdHrs     * R.ot25x;
-  const sickAmt        = sickHrs      * combined;
-  const rosteredPhAmt  = rosteredPhHrs * combined;
-  const phLeaveAmt     = phLeaveHrs   * combined;
-  const alWdNormalAmt   = alWdHrs      * combined;
-  const alWdExcessAmt   = alWdHrs      * combined * 0.10;
-  const alSunNormalAmt  = alSunHrs     * combined;
-  const alSunExcessAmt  = alSunHrs     * 0.80 * combined;
-  const alLoadingAmt    = (alWdHrs + alSunHrs) * combined * 0.20;
-  const eGradeAmt        = eGradeHrs  * R.eGrade;
-
-  const gross = wdNormalAmt + wdNightAmt +
-                sunNormalAmt + sunWePenAmt +
-                exNormalAmt + exPenAmt + exAllow + jumpUpAmt +
-                ot2xAmt +
-                phWkdAmt + sickAmt + rosteredPhAmt + phLeaveAmt +
-                alWdNormalAmt + alWdExcessAmt + alSunNormalAmt + alSunExcessAmt + alLoadingAmt +
-                eGradeAmt;
-
-  const preTaxDed = parseFloat(document.getElementById('preTaxInput').value) || 0;
-  const taxable = Math.max(0, gross - preTaxDed);
+  const preTaxDed = Math.max(0, parseFloat(document.getElementById('preTaxInput').value) || 0);
   const taxSchedule = getScale2Schedule();
-  const tax = estimateTax(taxable, taxSchedule);
-  const net = taxable - tax;
-  const superBase = gross - ot2xAmt - phWkdAmt;
-  const superAmt  = superBase * SUPER_GUARANTEE_RATE;
+  const result = calculatePay({
+    entries: state.weeks.flatMap(w => w.days), rates: R, taxSchedule,
+    deductions: preTaxDed, siteRate: siteJumpRate, siteInSuper, jumpUpRate,
+  });
+  const { gross, taxable, tax, net, superAmount: superAmt, workedHours: workedHrs } = result;
   const superConcessionalCap = getSuperConcessionalCap();
   const annualSuper = Math.min(superAmt * 26, superConcessionalCap);
 
@@ -635,6 +666,8 @@ function runCalc() {
   document.getElementById('netVal').textContent = fmt(net);
   document.getElementById('superVal').textContent = fmt(superAmt);
   document.getElementById('hoursVal').textContent = workedHrs % 1 === 0 ? workedHrs : workedHrs.toFixed(2);
+
+  document.getElementById('paidHoursVal').textContent = result.paidBaseHours.toFixed(2);
 
   document.getElementById('annGross').textContent = fmt(gross * 26);
   document.getElementById('annTax').textContent   = fmt(tax   * 26);
@@ -662,35 +695,28 @@ function runCalc() {
       <span class="bd-val">${fmt(val)}</span>
     </div>`);
 
-  sec('Pay Elements');
-  const normalHrs = wdHrs + sunHrs;
-  if (normalHrs > 0)    row('Normal',                           `${h(normalHrs)} × ${cur(combined)}/hr`,          wdNormalAmt + sunNormalAmt);
-  if (wdHrs > 0)        row('Weekday NS Penalty 30%',           `${h(wdHrs)} × ${cur(R.night)}/hr`,               wdNightAmt);
-  if (sunHrs > 0)       row('Weekend NS Penalty 100%',          `${h(sunHrs)} × ${cur(R.wePen)}/hr`,              sunWePenAmt);
-  if (exHrs > 0)        row('Project — Normal',                 `${h(exHrs)} × ${cur(exRate)}/hr`, exNormalAmt);
-  if (exHrs > 0)        row('Project — Penalty',               `${h(exHrs)} × ${cur(exRate)}/hr`, exPenAmt);
-  if (otHrs > 0)        row('Overtime Shift (200%)',             `${h(otHrs)} × ${cur(R.ot2x)}/hr`,               ot2xAmt);
-  if (phWkdHrs > 0)     row('PH Overtime Shift (250%)',         `${h(phWkdHrs)} × ${cur(R.ot25x)}/hr`,           phWkdAmt);
-  if (sickHrs > 0)      row('Sick / Bonus / WLBP (100%)',        `${h(sickHrs)} × ${cur(combined)}/hr`,            sickAmt);
-  if (rosteredPhHrs > 0) row('Rostered PH (100%)',               `${h(rosteredPhHrs)} × ${cur(combined)}/hr`,      rosteredPhAmt);
-  if (phLeaveHrs > 0)   row('Non-Roster PH Leave',              `${h(phLeaveHrs)} × ${cur(combined)}/hr`,         phLeaveAmt);
-  if (alWdHrs + alSunHrs > 0) row('Annual Leave',                    `${h(alWdHrs + alSunHrs)} × ${cur(combined)}/hr`,                      alWdNormalAmt + alSunNormalAmt);
-  if (alWdHrs > 0)            row('Annual Leave NS Excess (10%)',     `${h(alWdHrs)} × ${cur(combined * 0.10)}/hr`,                          alWdExcessAmt);
-  if (alSunHrs > 0)           row('Annual Leave NS Sunday Excess (80%)', `${h(alSunHrs * 0.80)} × ${cur(combined)}/hr`,                     alSunExcessAmt);
-
-  sec('Allowances');
-  if (alLoadingAmt > 0)   row('Annual Leave Loading (20%)',          `${h(alWdHrs + alSunHrs)} × ${cur(combined * 0.20)}/hr`, alLoadingAmt);
-  if (eGradeHrs > 0)      row('E Grade Electrical — Infra (A440)',  `${h(eGradeHrs)} × ${curPrecise(R.eGrade)}/hr`,    eGradeAmt);
-  if (exHrs > 0)      rows.push(`
-    <div class="bd-row">
-      <span class="bd-desc">Site Allowance<span class="bd-meta">${h(exHrs)} × $<input class="rate-inline" type="number" value="${siteJumpRate.toFixed(2)}" min="0" step="0.01" title="Click to edit rate" onchange="siteJumpRate=parseFloat(this.value)||0;runCalc()">/hr</span></span>
-      <span class="bd-val">${fmt(exAllow)}</span>
-    </div>`);
-  if (exHrs > 0)      rows.push(`
-    <div class="bd-row">
-      <span class="bd-desc">JumpUp-Infra<span class="bd-meta">${h(exHrs)} × $<input class="rate-inline" type="number" value="${jumpUpRate.toFixed(4)}" min="0" step="0.0001" title="Click to edit rate" onchange="jumpUpRate=parseFloat(this.value)||0;runCalc()">/hr</span></span>
-      <span class="bd-val">${fmt(jumpUpAmt)}</span>
-    </div>`);
+  for (const section of ['Pay Elements', 'Allowances']) {
+    sec(section);
+    for (const line of result.lines.filter(line => line.section === section)) {
+      if (line.code === 'site' || line.code === 'jumpUp') {
+        const isSite = line.code === 'site';
+        const variable = isSite ? 'siteJumpRate' : 'jumpUpRate';
+        rows.push(`<div class="bd-row">
+          <span class="bd-desc">${line.label}<span class="bd-meta">${h(line.hours)} × $<input
+            class="rate-inline" type="number" value="${line.rate.toFixed(4)}" min="0" step="0.0001"
+            aria-label="${line.label} hourly rate"
+            onchange="${variable}=Math.max(0,parseFloat(this.value)||0);runCalc()">/hr</span>
+            ${isSite ? `<label class="bd-meta" style="display:block;margin:6px 0 0"><input type="checkbox"
+              id="siteSuperInput" ${siteInSuper ? 'checked' : ''}
+              onchange="siteInSuper=this.checked;runCalc()"> Include site allowance in super</label>` : ''}
+          </span><span class="bd-val">${fmt(line.amount)}</span></div>`);
+      } else if (line.parts) {
+        for (const part of line.parts) row(part.label, `${h(part.hours)} × ${curPrecise(line.rate)}/hr`, part.amount);
+      } else {
+        row(line.label, `${h(line.hours)} × ${curPrecise(line.rate)}/hr${line.perDay ? ' · rounded per day' : ''}`, line.amount);
+      }
+    }
+  }
 
   tot('Gross', gross);
 
@@ -733,13 +759,14 @@ function estimateTax(fortnightlyTaxable, schedule = getScale2Schedule()) {
 // ── Formatters ─────────────────────────────────────────────
 const fmt = n => '$' + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 const fmtWhole = n => '$' + Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
-const cur = n => '$' + n.toFixed(2);
 const curPrecise = n => '$' + n.toFixed(4);
 const h   = n => n % 1 === 0 ? n+'h' : n.toFixed(1)+'h';
 
 // ── Init ───────────────────────────────────────────────────
-populateGradeSelect();
-initSchedule();
+if (typeof document !== 'undefined') {
+  populateGradeSelect();
+  initSchedule();
+}
 </script>
 </body>
 </html>
