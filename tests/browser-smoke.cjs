@@ -17,7 +17,7 @@ const { pathToFileURL } = require('node:url');
     await page.locator('#gradeSelect').selectOption('VZK');
     const initialGross = await page.locator('#grossVal').textContent();
     assert.equal(await page.locator('#hoursVal').textContent(),'76');
-    assert.equal(await page.locator('#paidHoursVal').textContent(),'76.00');
+    assert.equal(await page.locator('#paidHoursVal').textContent(),'76');
     // Edit Monday, then prove Reset updates the displayed calculation.
     await page.locator('#wk1days .day-hrs').nth(1).click();
     await page.locator('.day-hrs-input').fill('12');
@@ -37,7 +37,7 @@ const { pathToFileURL } = require('node:url');
     // Leave counts as paid but not worked; Bonus/WLBP removes A440.
     await page.locator('#wk1days .type-select').nth(1).selectOption('sick');
     assert.equal(await page.locator('#hoursVal').textContent(),'66.50');
-    assert.equal(await page.locator('#paidHoursVal').textContent(),'76.00');
+    assert.equal(await page.locator('#paidHoursVal').textContent(),'76');
     const sickGross = await page.locator('#grossVal').textContent();
     await page.locator('#wk1days .type-select').nth(1).selectOption('bonus_wlbp');
     assert.notEqual(await page.locator('#grossVal').textContent(),sickGross);

@@ -656,7 +656,7 @@ function runCalc() {
     entries: state.weeks.flatMap(w => w.days), rates: R, taxSchedule,
     deductions: preTaxDed, siteRate: siteJumpRate, siteInSuper, jumpUpRate,
   });
-  const { gross, taxable, tax, net, superAmount: superAmt, workedHours: workedHrs } = result;
+  const { gross, taxable, tax, net, superAmount: superAmt, workedHours: workedHrs, paidBaseHours: paidHrs } = result;
   const superConcessionalCap = getSuperConcessionalCap();
   const annualSuper = Math.min(superAmt * 26, superConcessionalCap);
 
@@ -667,7 +667,7 @@ function runCalc() {
   document.getElementById('superVal').textContent = fmt(superAmt);
   document.getElementById('hoursVal').textContent = workedHrs % 1 === 0 ? workedHrs : workedHrs.toFixed(2);
 
-  document.getElementById('paidHoursVal').textContent = result.paidBaseHours.toFixed(2);
+  document.getElementById('paidHoursVal').textContent = paidHrs % 1 === 0 ? paidHrs : paidHrs.toFixed(2);
 
   document.getElementById('annGross').textContent = fmt(gross * 26);
   document.getElementById('annTax').textContent   = fmt(tax   * 26);
